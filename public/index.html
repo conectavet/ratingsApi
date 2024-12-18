@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valoraciones</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f0f2f5;
+        }
+        .rating-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .distribution {
+            margin: 20px 0;
+        }
+        .bar {
+            background: #e0e0e0;
+            height: 20px;
+            border-radius: 10px;
+            margin: 5px 0;
+        }
+        .bar-fill {
+            background: #2196F3;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .comments {
+            margin-top: 20px;
+        }
+        .comment {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        .search-form {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-form input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+        }
+        
+        .search-form button {
+            padding: 8px 16px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .search-form button:hover {
+            background-color: #1976D2;
+        }
+        
+        .api-docs {
+            margin-top: 0;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .endpoint-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .code-block {
+            margin: 15px 0;
+        }
+
+        .code-block h4 {
+            margin-bottom: 10px;
+            color: #2196F3;
+        }
+
+        pre {
+            background: #f1f3f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-family: monospace;
+            margin: 0;
+        }
+
+        code {
+            font-family: monospace;
+        }
+
+        .example {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .example h4 {
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            pre {
+                font-size: 14px;
+            }
+        }
+
+        .rating-form {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .star-rating {
+            font-size: 30px;
+            margin: 15px 0;
+        }
+
+        .star {
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .star.active {
+            color: #ffd700;
+        }
+
+        .star:hover,
+        .star:hover ~ .star {
+            color: #ffd700;
+        }
+
+        .rating-form input,
+        .rating-form textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .rating-form textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .rating-form button {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .rating-form button:hover {
+            background-color: #1976D2;
+        }
+
+        /* Nuevo layout de dos columnas */
+        .container {
+            display: grid;
+            grid-template-columns: 40% 30% 30%;
+            gap: 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .left-column,
+        .center-column,
+        .right-column {
+            width: 100%;
+        }
+
+        .left-column {
+            position: sticky;
+            top: 20px;
+            align-self: start;
+            height: calc(100vh - 40px);
+        }
+
+        .comments-card {
+            position: sticky;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comments-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            margin: -10px;
+        }
+
+        /* Modificar el responsive */
+        @media (max-width: 1400px) {
+            .container {
+                grid-template-columns: 60% 40%;
+            }
+            .right-column {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .right-column {
+                grid-column: span 1;
+            }
+            .left-column,
+            .comments-card {
+                position: static;
+            }
+        }
+
+        /* Mejorar el estilo de los comentarios */
+        .comment {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
+
+        .comment p {
+            margin: 0 0 8px 0;
+            color: #333;
+        }
+
+        .comment small {
+            color: #666;
+            display: block;
+        }
+
+        /* Modificar el estilo existente */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f0f2f5;
+        }
+
+        .api-docs {
+            margin-top: 0;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        /* Modificar el estilo de comentarios */
+        .comments {
+            margin-top: 20px;
+        }
+
+        #commentsList {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: white;
+        }
+
+        /* Estilizar la barra de desplazamiento */
+        #commentsList::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #commentsList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #commentsList::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        #commentsList::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .left-column {
+                position: static;
+                height: auto;
+            }
+
+            .api-docs {
+                margin-top: 20px;
+            }
+        }
+
+        /* Ajustar el estilo de las tarjetas */
+        .rating-card, .api-docs {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 0;
+        }
+
+        .endpoint-card {
+            box-shadow: none;
+            border: 1px solid #eee;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-out 2.7s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        .member-select-container {
+            position: relative;
+            flex: 1;
+        }
+
+        #memberSearch {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        #memberSelect {
+            position: absolute;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 4px;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #memberSelect option {
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        #memberSelect option:hover {
+            background-color: #f5f5f5;
+        }
+
+        
+        .search-form {
+            display: grid;
+            grid-template-columns: 1fr 200px auto;
+            gap: 10px;
+            align-items: start;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Columna izquierda (API Docs) -->
+        <div class="left-column">
+            <div class="api-docs">
+                <div class="rating-card">
+                <h2>Documentación de la API</h2>
+                <div class="endpoint-card">
+                    <h3>Endpoint GET /ratings/{idMember}</h3>
+                    <p>Obtiene las valoraciones de un especialista específico.</p>
+                    
+                    <div class="code-block">
+                        <h4>Solicitud:</h4>
+                        <pre><code>GET /ratings/{idMember}
+Headers:
+Accept: application/json</code></pre>
+                    </div>
+
+                    <div class="code-block">
+                        <h4>Respuesta:</h4>
+                        <pre><code>{
+    "page": 1,
+    "perPage": 30,
+    "totalItems": 2,
+    "items": [
+        {
+            "id": "RECORD_ID",
+            "collectionId": "1e9y13iy356hvke",
+            "collectionName": "ratings",
+            "created": "2024-12-17 22:59:28.290Z",
+            "updated": "2024-12-17 22:59:28.290Z",
+            "idMember": "xlfziubyddocqzp",
+            "idUser": "user123",
+            "rating": 4,
+            "comment": "Excelente atención"
+        }
+    ]
+}</code></pre>
+                    </div>
+
+                    <div class="example">
+                        <h4>Ejemplo de uso con cURL:</h4>
+                        <pre><code>curl -H "Accept: application/json" "http://localhost:3000/ratings/xlfziubyddocqzp"</code></pre>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <!-- Columna central (Estadísticas) -->
+        <div class="center-column">
+            <div class="rating-card">
+                <h2>Valoraciones del member</h2>
+                <div class="search-form">
+                    <div class="member-select-container">
+                        <input type="text" id="memberSearch" placeholder="Buscar member por nombre..." autocomplete="off">
+                        <select id="memberSelect" size="5" style="display: none;">
+                            <!-- Las opciones se llenarán dinámicamente -->
+                        </select>
+                    </div>
+                    <input type="text" id="memberIdInput" placeholder="ID del member" value="xlfziubyddocqzp">
+                    <button onclick="consultarmember()">Consultar</button>
+                </div>
+                <div class="rating-form">
+                    <h3>Ahumentar Valoración</h3>
+                    <div class="star-rating">
+                        <span class="star" data-rating="1">★</span>
+                        <span class="star" data-rating="2">★</span>
+                        <span class="star" data-rating="3">★</span>
+                        <span class="star" data-rating="4">★</span>
+                        <span class="star" data-rating="5">★</span>
+                    </div>
+                    <input type="text" id="userIdInput" placeholder="ID del usuario">
+                    <textarea id="commentInput" placeholder="Escribe tu comentario"></textarea>
+                    <button onclick="enviarValoracion()">Enviar Valoración</button>
+                </div>
+                <div id="loading" class="loading">Cargando valoraciones...</div>
+                <div id="content" style="display: none;">
+                    <div class="stats">
+                        <div class="stat-box">
+                            <div class="stat-value" id="average">0.0</div>
+                            <div class="stat-label">Promedio</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="totalRatings">0</div>
+                            <div class="stat-label">Total de Valoraciones</div>
+                        </div>
+                    </div>
+
+                    <div class="distribution">
+                        <h3>Distribución de Valoraciones</h3>
+                        <div id="ratingBars"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha (Comentarios) -->
+        <div class="right-column">
+            <div class="rating-card comments-card">
+                <h2>Comentarios</h2>
+                <div id="commentsList" class="comments-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/pocketbase@0.21.1/dist/pocketbase.umd.js"></script>
+
+    <script>
+        // Inicializar PocketBase
+        const pb = new PocketBase('https://db.conectavet.cl:8080');
+
+        let selectedRating = 0;
+        
+        // Inicializar el sistema de estrellas
+        document.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', (e) => {
+                const rating = e.target.dataset.rating;
+                selectedRating = parseInt(rating);
+                updateStars();
+            });
+        });
+
+        function updateStars() {
+            document.querySelectorAll('.star').forEach(star => {
+                const rating = parseInt(star.dataset.rating);
+                star.classList.toggle('active', rating <= selectedRating);
+            });
+        }
+
+        // Variables para el lazyload
+        let lastUpdate = new Date();
+        let pollingInterval;
+        const POLLING_INTERVAL = 5000; // 5 segundos
+
+        // Función para verificar actualizaciones
+        async function checkUpdates(idMember) {
+            try {
+                const result = await pb.collection('ratings').getList(1, 1, {
+                    filter: `idMember = "${idMember}" && updated > "${lastUpdate.toISOString()}"`,
+                    sort: '-updated'
+                });
+
+                if (result.totalItems > 0) {
+                    // Si hay actualizaciones, refrescar los datos
+                    await fetchRatings(idMember);
+                    lastUpdate = new Date();
+                    
+                    // Mostrar notificación
+                    showNotification('Se han actualizado las valoraciones');
+                }
+            } catch (error) {
+                console.error('Error checking updates:', error);
+            }
+        }
+
+        // Función para mostrar notificaciones
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // Remover la notificación después de 3 segundos
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Modificar la función consultarmember
+        async function consultarmember() {
+            const idMember = document.getElementById('memberIdInput').value.trim();
+            if (!idMember) {
+                alert('Por favor ingrese un ID de member');
+                return;
+            }
+
+            // Limpiar el intervalo anterior si existe
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+
+            await fetchRatings(idMember);
+            lastUpdate = new Date();
+
+            // Iniciar nuevo polling para este member
+            pollingInterval = setInterval(() => checkUpdates(idMember), POLLING_INTERVAL);
+        }
+
+        async function fetchRatings(idMember) {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('content').style.display = 'none';
+            
+            try {
+                const response = await fetch(`/ratings/${idMember}`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                
+                // Actualizar estadísticas
+                document.getElementById('average').textContent = data.average.toFixed(1);
+                document.getElementById('totalRatings').textContent = data.totalRatings;
+
+                // Mostrar distribución
+                const ratingBarsHtml = Object.entries(data.ratingDistribution)
+                    .sort(([a], [b]) => b - a)
+                    .map(([rating, count]) => {
+                        const percentage = (count / data.totalRatings) * 100;
+                        return `
+                            <div>
+                                ${rating} estrellas (${count})
+                                <div class="bar">
+                                    <div class="bar-fill" style="width: ${percentage}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    })
+                    .join('');
+                document.getElementById('ratingBars').innerHTML = ratingBarsHtml || '<p>No hay valoraciones aún.</p>';
+
+                // Mostrar comentarios
+                const commentsHtml = data.comments
+                    .map(comment => `
+                        <div class="comment">
+                            <p>${comment.comment}</p>
+                            <small>Usuario: ${comment.idUser}</small>
+                        </div>
+                    `)
+                    .join('');
+                document.getElementById('commentsList').innerHTML = 
+                    commentsHtml || '<p>No hay comentarios aún.</p>';
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loading').textContent = 
+                    'Error al cargar las valoraciones. Por favor, intenta de nuevo.';
+            }
+        }
+
+        // Función auxiliar para procesar los ratings
+        function processRatings(ratings) {
+            if (!ratings.length) {
+                return {
+                    average: 0,
+                    totalRatings: 0,
+                    ratingDistribution: {},
+                    comments: []
+                };
+            }
+
+            const average = ratings.reduce((acc, curr) => acc + curr.rating, 0) / ratings.length;
+            
+            const ratingDistribution = ratings.reduce((acc, curr) => {
+                acc[curr.rating] = (acc[curr.rating] || 0) + 1;
+                return acc;
+            }, {});
+            
+            const comments = ratings
+                .filter(rating => rating.comment)
+                .map(rating => ({
+                    comment: rating.comment,
+                    idUser: rating.idUser
+                }));
+
+            return {
+                average: Number(average.toFixed(2)),
+                totalRatings: ratings.length,
+                ratingDistribution,
+                comments
+            };
+        }
+
+        // Cargar los datos cuando la página se carga con el ID por defecto
+        window.addEventListener('load', () => consultarmember());
+
+        async function enviarValoracion() {
+            const idMember = document.getElementById('memberIdInput').value.trim();
+            const idUser = document.getElementById('userIdInput').value.trim();
+            const comment = document.getElementById('commentInput').value.trim();
+
+            if (!selectedRating) {
+                alert('Por favor selecciona una calificación');
+                return;
+            }
+            if (!idUser) {
+                alert('Por favor ingresa el ID del usuario');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/ratings/${idMember}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        rating: selectedRating,
+                        comment,
+                        idUser
+                    })
+                });
+
+                if (response.ok) {
+                    alert('Valoración enviada con éxito');
+                    // Limpiar el formulario
+                    selectedRating = 0;
+                    document.getElementById('userIdInput').value = '';
+                    document.getElementById('commentInput').value = '';
+                    updateStars();
+                    // Actualizar las valoraciones mostradas
+                    await fetchRatings(idMember);
+                } else {
+                    alert('Error al enviar la valoración');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al enviar la valoración: ' + error.message);
+            }
+        }
+
+        // Limpiar el polling cuando se cierra la página
+        window.addEventListener('beforeunload', () => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+        });
+
+        // Función para cargar y buscar members
+        async function loadMembers(searchTerm = '') {
+            try {
+                let filter = '';
+                if (searchTerm) {
+                    filter = `full_name ~ "${searchTerm}" || email ~ "${searchTerm}"`;
+                }
+
+                const records = await pb.collection('members').getList(1, 10, {
+                    filter: filter,
+                    sort: 'full_name',
+                    fields: 'id,full_name,userId'
+                });
+
+                const select = document.getElementById('memberSelect');
+                select.innerHTML = '';
+
+                records.items.forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.id;
+                    option.textContent = `${member.full_name} `;
+                    option.dataset.id = member.id;
+                    select.appendChild(option);
+                });
+
+                select.style.display = records.items.length > 0 ? 'block' : 'none';
+            } catch (error) {
+                console.error('Error loading members:', error);
+            }
+        }
+
+        // Configurar el buscador
+        const searchInput = document.getElementById('memberSearch');
+        const memberSelect = document.getElementById('memberSelect');
+        const memberIdInput = document.getElementById('memberIdInput');
+
+        let searchTimeout;
+
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadMembers(e.target.value);
+            }, 300);
+        });
+
+        searchInput.addEventListener('focus', () => {
+            if (memberSelect.children.length > 0) {
+                memberSelect.style.display = 'block';
+            }
+        });
+
+        memberSelect.addEventListener('change', (e) => {
+            const selectedOption = e.target.selectedOptions[0];
+            if (selectedOption) {
+                memberIdInput.value = selectedOption.dataset.id;
+                searchInput.value = selectedOption.textContent;
+                memberSelect.style.display = 'none';
+                consultarmember();
+            }
+        });
+
+        // Cerrar el selector cuando se hace clic fuera
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.member-select-container')) {
+                memberSelect.style.display = 'none';
+            }
+        });
+
+        // Cargar members iniciales
+        window.addEventListener('load', () => {
+            loadMembers();
+        });
+    </script>
+</body>
+</html> 
